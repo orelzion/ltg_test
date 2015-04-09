@@ -5,12 +5,12 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
-import android.hardware.Camera;
 import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,14 +18,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.os.Build;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.facebook.FacebookSdk;
-
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -77,7 +75,10 @@ public class MainActivity extends ActionBarActivity {
 
         private Button mFacebookLoginButton;
         private Button mFacebookFriendsButton;
+        private RecyclerView mFriendsList;
         private View mProgressBarView;
+
+        private FriendsAdapter mAdapter;
 
         public PlaceholderFragment() {
         }
@@ -93,11 +94,24 @@ public class MainActivity extends ActionBarActivity {
             super.onViewCreated(view, savedInstanceState);
             mFacebookLoginButton = (Button) view.findViewById(R.id.facebook_login_btn);
             mFacebookFriendsButton = (Button) view.findViewById(R.id.facebook_get_friends_btn);
+            mFriendsList = (RecyclerView) view.findViewById(R.id.friends_list);
             mProgressBarView = view.findViewById(R.id.progress_bar);
 
             registerOnClickListeners(mFacebookLoginButton, mFacebookFriendsButton);
 
-            showHashKey(getActivity());
+            LinearLayoutManager lManager = new LinearLayoutManager(getActivity());
+            mFriendsList.setHasFixedSize(true);
+            mFriendsList.setLayoutManager(lManager);
+
+            mAdapter = new FriendsAdapter();
+            mFriendsList.setAdapter(mAdapter);
+            mAdapter.setListener(new FriendsAdapter.OnFriendClickListener() {
+                @Override
+                public void OnFriendClicked(String friendID) {
+
+                }
+            });
+//            showHashKey(getActivity());
         }
 
         private void registerOnClickListeners(View... views) {
@@ -123,8 +137,7 @@ public class MainActivity extends ActionBarActivity {
         @Override
         public void onClick(View v) {
             if(v.equals(mFacebookLoginButton)) {
-                mProgressBarView.setVisibility(View.VISIBLE);
-                FacebookHandler.getInstance().loginToFacebook(getActivity(), new FacebookHandler.OnFacebookLogin() {
+                FacebookHandler.getInstance().loginToFacebook(getActivity(), new FacebookHandler.OnFacebookResult() {
                     @Override
                     public void success() {
                         if(isAdded()) {
@@ -142,7 +155,24 @@ public class MainActivity extends ActionBarActivity {
                     }
                 });
             } else if(v.equals(mFacebookFriendsButton)) {
-                FacebookHandler.getInstance().getFriendsList();
+                mProgressBarView.setVisibility(View.VISIBLE);
+                FacebookHandler.getInstance().getFriendsList(new FacebookHandler.OnFriendsResult() {
+                    @Override
+                    public void success(List<FacebookUser> users) {
+                        if(isAdded()) {
+                            mProgressBarView.setVisibility(View.GONE);
+                            mAdapter.setFriendsList(users);
+                        }
+                    }
+
+                    @Override
+                    public void failed(String error) {
+                        if(isAdded()) {
+                            mProgressBarView.setVisibility(View.GONE);
+                            Toast.makeText(getActivity(), error, Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
             }
         }
     }

@@ -26,6 +26,13 @@
         android:text="@string/facebook_friends"
         />
 
+    <android.support.v7.widget.RecyclerView
+        android:layout_below="@+id/facebook_get_friends_btn"
+        android:id="@+id/friends_list"
+        android:scrollbars="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
     <FrameLayout
         android:id="@+id/progress_bar"
         android:layout_width="match_parent"
