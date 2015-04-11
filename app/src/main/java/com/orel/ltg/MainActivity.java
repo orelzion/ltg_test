@@ -68,6 +68,12 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        FacebookHandler.getInstance().onDestroy();
+    }
+
     /**
      * A placeholder fragment containing a simple view.
      */
@@ -108,7 +114,24 @@ public class MainActivity extends ActionBarActivity {
             mAdapter.setListener(new FriendsAdapter.OnFriendClickListener() {
                 @Override
                 public void OnFriendClicked(String friendID) {
+                    mProgressBarView.setVisibility(View.VISIBLE);
+                    FacebookHandler.getInstance().shareOnWall(getActivity(), friendID, new FacebookHandler.OnFacebookResult() {
+                        @Override
+                        public void success() {
+                            if(isAdded()) {
+                                Toast.makeText(getActivity(), "Ata Totach", Toast.LENGTH_SHORT).show();
+                                mProgressBarView.setVisibility(View.GONE);
+                            }
+                        }
 
+                        @Override
+                        public void failed(String error) {
+                            if(isAdded()) {
+                                Toast.makeText(getActivity(), error, Toast.LENGTH_SHORT).show();
+                                mProgressBarView.setVisibility(View.GONE);
+                            }
+                        }
+                    });
                 }
             });
 //            showHashKey(getActivity());
@@ -123,7 +146,7 @@ public class MainActivity extends ActionBarActivity {
         public static void showHashKey(Context context) {
             try {
                 PackageInfo info = context.getPackageManager().getPackageInfo(
-                        "com.orel.ltg", PackageManager.GET_SIGNATURES); //Your            package name here
+                        "com.orel.ltg", PackageManager.GET_SIGNATURES);
                 for (Signature signature : info.signatures) {
                     MessageDigest md = MessageDigest.getInstance("SHA");
                     md.update(signature.toByteArray());
@@ -137,12 +160,13 @@ public class MainActivity extends ActionBarActivity {
         @Override
         public void onClick(View v) {
             if(v.equals(mFacebookLoginButton)) {
-                FacebookHandler.getInstance().loginToFacebook(getActivity(), new FacebookHandler.OnFacebookResult() {
+                FacebookHandler.getInstance().loginToFacebook(getActivity(), false, new FacebookHandler.OnFacebookResult() {
                     @Override
                     public void success() {
                         if(isAdded()) {
                             Toast.makeText(getActivity(), "Ata Totach", Toast.LENGTH_SHORT).show();
                             mProgressBarView.setVisibility(View.GONE);
+                            mFacebookFriendsButton.setEnabled(true);
                         }
                     }
 
